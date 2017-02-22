@@ -12,6 +12,23 @@ def assign_value(values, box, value):
         assignments.append(values.copy())
     return values
 
+def remove_naked_twins_values(values, twins):
+    """Utility function to eliminate naked twins values as possibilities from their peers.
+    Args:
+        values(dict): a dictionary of the form {'box_name': '123456789', ...}
+        twins(tuple): a tuple indicating naked twins found in a give unit
+    Returns:
+        the values dictionary with the naked twins eliminated from peers.
+    """
+    jointPeers = peers[twins[0]].copy()
+    jointPeers = jointPeers.intersection(peers[twins[1]]) - set([twins[0], twins[1]])
+    for peer in jointPeers:
+        if values[twins[0]][0] in values[peer]:
+            values = assign_value(values, peer, values[peer].replace(values[twins[0]][0], ''))
+        if values[twins[0]][1] in values[peer]:
+            values = assign_value(values, peer, values[peer].replace(values[twins[0]][1], ''))
+    return values
+
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
@@ -30,22 +47,13 @@ def naked_twins(values):
                 if peerValue == currValue:
                     if peerValue not in nakedTwinsRows:
                         nakedTwinsRows[peerValue] = set([(box, peer)])
+                        # Eliminate the naked twins as possibilities for their peers
+                        values = remove_naked_twins_values(values, (box, peer))
                     elif (peer, box) not in nakedTwinsRows[peerValue]:
                         nakedTwinsRows[peerValue].add((box,peer))
+                        # Eliminate the naked twins as possibilities for their peers
+                        values = remove_naked_twins_values(values, (box, peer))
 
-    # Eliminate the naked twins as possibilities for their peers
-    for key in nakedTwinsRows:
-        for twins in nakedTwinsRows[key]:
-            jointPeers = peers[twins[0]].copy()
-            jointPeers = jointPeers.intersection(peers[twins[1]]) - set([twins[0], twins[1]])
-            
-            for peer in jointPeers:
-                if values[twins[0]][0] in values[peer]:
-                    values = assign_value(values, peer, values[peer].replace(values[twins[0]][0], ''))
-
-                if values[twins[0]][1] in values[peer]:
-                    values = assign_value(values, peer, values[peer].replace(values[twins[0]][1], ''))
-                
     return values
 
 def cross(A, B):
@@ -205,7 +213,8 @@ column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC', 'DEF', 'GHI') for cs in ('123', '456', '789')]
 
 # List of diagonal units on the grid
-diag_units = [cross(rows, cols)[0::10], cross(rows, cols[::-1])[0::10]]
+#diag_units = [cross(rows, cols)[0::10], cross(rows, cols[::-1])[0::10]]
+diag_units = [[r+c for r,c in zip(rows, cols)], [r+c for r,c in zip(rows, cols[::-1])]]
 
 # List of all units (row, column & square) on the grid
 unitlist = row_units + column_units + square_units + diag_units
