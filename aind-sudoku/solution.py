@@ -184,7 +184,7 @@ def search(values):
     # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
     for potential in values[nextCandidate]:
         newValues = values.copy()
-        newValues = assign_values(newValues, nextCandidate, potential)
+        newValues = assign_value(newValues, nextCandidate, potential)
         ret = search(newValues)
         if ret:
             return ret
